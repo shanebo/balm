@@ -1,6 +1,6 @@
 {
   "name": "@dylan/balm",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Balm for Dylan's Beard.",
   "license": "MIT",
   "keywords": [
@@ -12,11 +12,9 @@
   "main": "./index",
   "dependencies": {
     "callsites": "3.0.0",
+    "chokidar": "^3.5.2",
     "klona": "~2.0.5",
     "merge-anything": "~4.0.1",
     "traversy": "0.0.2"
-  },
-  "devDependencies": {
-    "chokidar": "^3.5.2"
   }
 }
