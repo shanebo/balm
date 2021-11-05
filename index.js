@@ -15,60 +15,14 @@ const beard = require('beard');
 let _root;
 let _blocksDir;
 let _handles = {}; // share between both bundling and templating/rendering
-let assetsMap = {}; // share between both bundling and templating/rendering
-let assetOpts = { inline: [] };
 const fileExtRegexStr = '(.beard$)';
-const regex = new RegExp(fileExtRegexStr, 'g');
-
-
-console.log('!!!!!!!!!! BALM LOADED LOCALLYITO !!!!!!!!!!');
-
-
-const asset = (options = { inline: [] }) => {
-  assetOpts = options;
-
-  return (origPath, opts = {}) => {
-    const { content, path } = assetsMap[origPath];
-    return opts.inline
-      ? content
-      : path;
-  }
-}
+// const regex = new RegExp(fileExtRegexStr, 'g');
 
 
 // we need to account for regexes for js src and image src
 const getAssetPaths = (str) => str
   .match(/(href=)"(.*?)"/g)
   .map(match => match.replace(/(href=|")/gi, ''));
-
-
-const loadAssetsMap = (origin = '') => {
-  assetsMap = {};
-
-  const entryPath = resolve('app/assets/entry.html');
-  const distDir = 'public/dist';
-  const entryDir = dirname(entryPath);
-  const entryName = basename(entryPath);
-  const resultPath = resolve(distDir, entryName);
-  const entryPaths = getAssetPaths(fs.readFileSync(entryPath, 'utf8'));
-  const resultPaths = getAssetPaths(fs.readFileSync(resultPath, 'utf8'));
-
-  entryPaths.forEach((path, p) => {
-    const key = resolve(entryDir, path);
-    const hashedPath = resultPaths[p];
-
-    assetsMap[key] = {};
-
-    if (assetOpts.inline.includes(key)) {
-      const cssPath = resolve(__base, '../public', hashedPath.replace(/^\//, ''));
-      assetsMap[key].content = fs.readFileSync(cssPath, 'utf8');
-    }
-
-    assetsMap[key].path = key.match(/\.svg$/)
-      ? hashedPath
-      : `${origin}${hashedPath}`;
-  });
-}
 
 
 const makeScopedClass = (path) => `b-${hash(path.replace(_root, ''))}`;
@@ -417,195 +371,193 @@ const defaults = {
 };
 
 
-class Balm {
 
-  constructor(opts = {}) {
-    console.log('\n\n\n');
-    console.log(opts);
-    console.log('\n\n\n');
+exports.balm = (opts = {}) => {
+  let assetOpts = { inline: [] };
+  let assetsMap = {};
 
-    const foo = merge(defaults, opts);
-    const { root, watch, assets, components } = foo;
+  opts = merge(defaults, opts);
 
-    const yo = {
-        root,
-        watch,
-        tags: {
-          asset: {
-            render: asset({
-              inline: assets.inline
-            }),
-            firstArgIsResolvedPath: true,
-            content: false
-          },
-          component: {
-            render: componentRendererMap[components.renderer],
-            firstArgIsResolvedPath: true,
-            content: true
-          }
-        },
-        shortcuts: components.shortcut.reduce(buildShortcut, {})
-    };
-
-    this.opts = merge(foo, yo);
-
-
-    console.log('\n\n\n');
-    console.log('after merge');
-    console.log(this.opts);
-    console.log('\n\n\n');
-    // this.opts = merge(defaults, opts);
-
-    this.blocksDir = `${this.opts.root}/../.beard`;
-    this.hashes = {};
-
-    _root = this.opts.root;
-    _blocksDir = this.blocksDir;
-
-    this.bundle();
-    this.beard = beard({
-      root: this.opts.root,
-      tags: this.opts.tags,
-      shortcuts: this.opts.shortcuts,
-      templates: this.opts.templates
-    });
-    this.render = this.beard.render.bind(this.beard);
-    this.partial = this.beard.partial.bind(this.beard);
-  }
-
-
-  watch() {
-    this.socket = new WebSocket.Server({ port: 7778 });
-    this.changes = [];
-
-    const watcher = 'chokidar';
-    const chokidar = require(watcher);
-    const balmFiles = chokidar.watch(`${this.opts.root}/**/*.beard`);
-    const assetsEntry = chokidar.watch('./public/dist/entry.html');
-    const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js']);
-
-    bundles.on('change', this.notifyClient.bind(this));
-    balmFiles.on('change', this.bundleFile.bind(this));
-    assetsEntry.on('change', loadAssetsMap.bind(null, this.opts.assets.origin));
-  }
-
-
-  bundle() {
-    if (this.opts.watch) {
-      this.watch();
-    } else {
-      // uncomment this
-      // loadAssetsMap(this.opts.assets.origin);
+  const beardConfig = {
+    shortcuts: opts.components.shortcut.reduce(buildShortcut, {}),
+    tags: {
+      asset: {
+        render: asset({
+          inline: opts.assets.inline
+        }),
+        firstArgIsResolvedPath: true,
+        content: false
+      },
+      component: {
+        render: componentRendererMap[opts.components.renderer],
+        firstArgIsResolvedPath: true,
+        content: true
+      }
     }
+  };
+
+  opts = merge(opts, beardConfig);
+
+
+  _root = opts.root;
+  _blocksDir = `${opts.root}/../.beard`;
+
+  let _socket;
+  let _timer;
+  let _hashes = {};
+  let _changes = [];
+
+  const regex = new RegExp(fileExtRegexStr, 'g');
+
+
+  function asset(options = { inline: [] }) {
+    assetOpts = options;
+
+    return (origPath, opts = {}) => {
+      const { content, path } = assetsMap[origPath];
+      return opts.inline
+        ? content
+        : path;
+    }
+  }
+
+
+  const loadAssetsMap = () => {
+    assetsMap = {};
+
+    const entryPath = resolve('app/assets/entry.html');
+    const distDir = 'public/dist';
+    const entryDir = dirname(entryPath);
+    const entryName = basename(entryPath);
+    const resultPath = resolve(distDir, entryName);
+    const entryPaths = getAssetPaths(fs.readFileSync(entryPath, 'utf8'));
+    const resultPaths = getAssetPaths(fs.readFileSync(resultPath, 'utf8'));
+
+    entryPaths.forEach((path, p) => {
+      const key = resolve(entryDir, path);
+      const hashedPath = resultPaths[p];
+
+      assetsMap[key] = {};
+
+      if (assetOpts.inline.includes(key)) {
+        const cssPath = resolve(__base, '../public', hashedPath.replace(/^\//, ''));
+        assetsMap[key].content = fs.readFileSync(cssPath, 'utf8');
+      }
+
+      assetsMap[key].path = key.match(/\.svg$/)
+        ? hashedPath
+        : `${opts.assets.origin}${hashedPath}`;
+    });
+  }
+
+
+  function bundle() {
+    // if (opts.watch) {
+    //   startWatching();
+    // } else {
+    //   // uncomment this
+    //   // loadAssetsMap();
+    // }
 
     blockTypes.css.bundles = { entry: [] };
     blockTypes.js.bundles = { entry: [] };
-    fse.ensureDirSync(this.blocksDir);
-    traversy(this.opts.root, fileExtRegexStr, this.bundleFile.bind(this));
+    fse.ensureDirSync(_blocksDir);
+    traversy(opts.root, fileExtRegexStr, bundleFile);
     writeEntryFile('css');
     writeEntryFile('js');
+
+    if (opts.watch) {
+      startWatching();
+    } else {
+      // uncomment this
+      // loadAssetsMap();
+    }
   }
 
 
-  bundleFile(path) {
+  function startWatching() {
+    _socket = new WebSocket.Server({ port: 7778 });
+
+    const watcher = 'chokidar';
+    const chokidar = require(watcher);
+    const balmFiles = chokidar.watch(`${opts.root}/**/*.beard`);
+    const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js']);
+    const assetsEntry = chokidar.watch('./public/dist/entry.html');
+
+    balmFiles.on('change', bundleFile);
+    bundles.on('change', notifyClient);
+    assetsEntry.on('change', loadAssetsMap);
+  }
+
+
+  function bundleFile(path) {
     const key = path.replace(regex, '');
     const blocks = extractBlocks(path);
 
     Object.entries(blocks).forEach(([ _, block ]) => {
       const { type, file, content, contentHash } = block;
-      const path = `${this.blocksDir}/${file}`;
-      const previousHash = this.hashes[file];
+      const path = `${_blocksDir}/${file}`;
+      const previousHash = _hashes[file];
 
       if (contentHash !== previousHash) {
         fs.writeFileSync(path, content);
-        this.hashes[file] = contentHash;
+        _hashes[file] = contentHash;
 
-        if (this.opts.loadHandles && type === 'handle') {
+        if (opts.loadHandles && type === 'handle') {
           delete require.cache[require.resolve(path)];
           _handles[key] = require(path);
         }
 
-        if (this.opts.watch && previousHash) {
-          console.log('notify client about', file);
-          this.notifyClient(path);
+        if (opts.watch && previousHash && ['template', 'handle'].includes(type)) {
+          notifyClient(path);
         }
 
         if (type === 'template') {
-          this.opts.templates[key] = content;
+          opts.templates[key] = content;
         }
       }
     });
   }
 
 
-  notifyClient(path) {
-    const ext = path.split('.').pop();
-    if (ext === 'css' && ext === 'js' && !path.includes('.handle.js')) {
-      console.log('supress notify client', path);
-      return;
+  function notifyClient(path) {
+    clearTimeout(_timer);
+
+    path = path.split('/').pop();
+
+    if (_changes.length > 3) {
+      // terrible way to supress firstPass
+      _changes = [];
+    } else {
+      _changes.push(path);
+      _changes = [...new Set(_changes)];
     }
 
-    clearTimeout(this.timer);
-    this.changes.push(path);
-
-    this.timer = setTimeout(() => {
-      this.socket.clients.forEach((client) => {
-        console.log('going to beard add to client');
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(this.changes));
-          this.changes = [];
+    _timer = setTimeout(() => {
+      _socket.clients.forEach((client) => {
+        if (_changes.length && client.readyState === WebSocket.OPEN) {
+          console.log('Notify client of changes', _changes);
+          client.send(JSON.stringify(_changes));
+          _changes = [];
         }
       });
     }, 50);
   }
+
+
+  bundle();
+
+
+  const engine = beard({
+    root: opts.root,
+    tags: opts.tags,
+    shortcuts: opts.shortcuts,
+    templates: opts.templates
+  });
+
+
+  return {
+    render: engine.render.bind(engine),
+    partial: engine.partial.bind(engine)
+  };
 }
-
-
-exports.Balm = Balm;
-
-
-
-
-
-
-
-
-
-
-
-
-// exports.page = () => {
-
-// }
-
-
-// exports.balm = (opts) => {
-//   let _root;
-//   let _blocksDir;
-//   let _handles = {}; // share between both bundling and templating/rendering
-//   let assetsMap = {}; // share between both bundling and templating/rendering
-//   let assetOpts = { inline: [] };
-//   const fileExtRegexStr = '(.beard$)';
-//   const regex = new RegExp(fileExtRegexStr, 'g');
-
-//   all the functions above
-
-//   return () => {
-//     bundleFile () {
-
-//     }
-//   };
-// }
-
-
-// const instance = balm({
-//   ...
-// })
-
-
-
-// balm
-// - configuration
-// - bundling
-// - rendering
-// - page

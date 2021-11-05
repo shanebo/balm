@@ -17,7 +17,7 @@
     "balm": "./cli.js"
   },
   "dependencies": {
-    "beard": "github:shanebo/beard#0.9.0",
+    "beard": "~0.9.1",
     "callsites": "3.0.0",
     "cheerio": "github:cheeriojs/cheerio#3368605edb3c5babecc8576602a9d54ccfdaef1e",
     "chokidar": "^3.5.2",

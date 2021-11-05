@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { Balm } = require('./index');
+const { balm } = require('./index');
 const { resolve } = require('path');
 
 if (process.argv.length != 3) {
@@ -8,11 +8,12 @@ if (process.argv.length != 3) {
   return;
 }
 
-const root = resolve(`${process.cwd()}/${process.argv[2]}`);
+const root = resolve(process.argv[2]);
 
-console.log(`Bundling balm files from ${root}...`)
+console.log(`Bundling balm files from ${root}...`);
 
-new Balm({
+balm({
   root,
+  watch: false,
   loadHandles: false
 });
