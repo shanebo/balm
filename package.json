@@ -9,12 +9,18 @@
   ],
   "repository": "shanebo/balm",
   "author": "Shane Thacker <shane@steadymade.com>",
-  "main": "./index",
+  "main": "./lib/index",
   "dependencies": {
+    "beard": "~0.9.1",
     "callsites": "3.0.0",
+    "cheerio": "github:cheeriojs/cheerio#3368605edb3c5babecc8576602a9d54ccfdaef1e",
     "chokidar": "^3.5.2",
+    "fs-extra": "~10.0.0",
     "klona": "~2.0.5",
-    "merge-anything": "~4.0.1",
-    "traversy": "0.0.2"
+    "merge-anything": "~4.0.2",
+    "normalize-selector": "0.2.0",
+    "traversy": "0.0.2",
+    "ws": "~8.2.3",
+    "xregexp": "~5.1.0"
   }
 }
