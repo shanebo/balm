@@ -17,6 +17,11 @@ let _blocksDir;
 let _handles = {};
 let assetsMap = {};
 let assetOpts = { inline: [] };
+const fileExtRegexStr = '(.beard$)';
+const regex = new RegExp(fileExtRegexStr, 'g');
+
+
+console.log('!!!!!!!!!! BALM LOADED LOCALLYITO !!!!!!!!!!');
 
 
 const asset = (options = { inline: [] }) => {
@@ -120,11 +125,8 @@ const componentRendererMap = {
 };
 
 
-console.log('BALM LOCAL LOADED!!!!!!!!!!');
-
-
 const buildShortcut = (shortcuts, { dir, alias = (name) => name }) => {
-  traversy(dir, '(.beard$)', (path) => {
+  traversy(dir, fileExtRegexStr, (path) => {
     const name = path
       .replace(dir + '/', '')
       .replace(/\//g, '.')
@@ -137,6 +139,53 @@ const buildShortcut = (shortcuts, { dir, alias = (name) => name }) => {
   });
 
   return shortcuts;
+}
+
+
+
+
+
+const defaults = {
+  root: './',
+  loadHandles: true,
+  templates: {},
+  watch: false,
+  assets: {
+    origin: '',
+    inline: []
+  },
+  components: {
+    renderer: 'component',
+    shortcut: []
+  }
+};
+
+
+exports.config = (opts) => {
+  const { root, watch, assets, components } = merge(defaults, opts);
+
+  return {
+    name: '@dylan/balm',
+    opts: {
+      root,
+      watch,
+      tags: {
+        asset: {
+          render: asset({
+            inline: assets.inline
+          }),
+          firstArgIsResolvedPath: true,
+          content: false
+        },
+        component: {
+          render: componentRendererMap[components.renderer],
+          firstArgIsResolvedPath: true,
+          content: true
+        }
+      },
+      shortcuts: components.shortcut.reduce(buildShortcut, {})
+    }
+  };
 }
 
 
@@ -155,6 +204,8 @@ exports.page = (path) => {
 }
 
 
+
+
 // - stripping out handles
 // - stripping out styles
 // - stripping out frontend js
@@ -168,18 +219,11 @@ exports.page = (path) => {
 
 
 const blockTypes = {
-  ssjs: {
-    type: 'ssjs',
+  handle: {
+    type: 'handle',
     tag: 'script[handle]',
     pathsRegex: /(import|require)[^'"`]+['"`]([\.\/][^'"`]+)['"`]/gmi,
-    ext: 'ssjs.js'
-  },
-  css: {
-    type: 'css',
-    tag: 'style:not(style[inline])',
-    pathsRegex: /(@import|url)\s*["'\(]*([^'"\)]+)/gmi,
-    importStatement: (path) => `@import './${path}';`,
-    ext: 'css'
+    ext: 'handle.js'
   },
   js: {
     type: 'js',
@@ -187,6 +231,18 @@ const blockTypes = {
     pathsRegex: /(import|require)[^'"`]+['"`]([\.\/][^'"`]+)['"`]/gmi,
     importStatement: (path) => `import './${path}';`,
     ext: 'js'
+  },
+  template: {
+    type: 'beard',
+    tag: 'template',
+    ext: 'beard'
+  },
+  css: {
+    type: 'css',
+    tag: 'style:not(style[inline])',
+    pathsRegex: /(@import|url)\s*["'\(]*([^'"\)]+)/gmi,
+    importStatement: (path) => `@import './${path}';`,
+    ext: 'css'
   }
 };
 
@@ -196,57 +252,91 @@ const deepCombinator = '>>>'; // this is our custom deep combinator for decendan
 const psuedoElements = /::after|:after|::backdrop|::after|:after|::backdrop|::before|:before|::cue|:cue|::first-letter|:first-letter|::first-line|:first-line|::grammar-error|::marker|::part\(.*?\)|::placeholder|::selection|::slotted\(.*?\)|::spelling-error/;
 
 
+function minimizeWhitespace(original$) {
+  const $ = vdom(cleanWhitespace(original$('template').html()));
+  const ommittedTags = 'pre, code, textarea';
+  const originalWhitespaceTags = original$(ommittedTags);
+  const whitespaceTags = $(ommittedTags);
 
-function parseBlocks ($, path) {
-  const blocks = extractBlocks($, path);
-
-  Object.entries(blocks).forEach(([type, block]) => {
-    const blockType = blockTypes[type];
-    const { importStatement, ext, pathsRegex } = blockType;
-
-    if (type === 'css') {
-      block.content = block.hasOwnProperty('scoped')
-        ? scopeCSS(path, block.content, $)
-        : cleanCSS(block.content, $);
-    }
-
-    block.content = fixPaths(path, block.content, pathsRegex);
-    block.file = getHashedPath(path, ext);
-
-    if (type !== 'ssjs') {
-      let { bundle } = block;
-
-      bundle = !bundle
-        ? ['entry']
-        : bundle.split(',').filter(b => b).map(b => b.trim());
-
-      bundle.forEach((b) => {
-        if (!blockType.bundles[b]) {
-          blockType.bundles[b] = [];
-        }
-
-        blockType.bundles[b].push(importStatement(block.file));
-      });
-    }
+  originalWhitespaceTags.each((i, el) => {
+    $(whitespaceTags[i]).replaceWith(el);
   });
 
-  return blocks;
+  return fixInlineAttributeConditions($.html());
 }
 
 
-function extractBlocks($) {
+const fixInlineAttributeConditions = (str) => str.replace(/=\"=(=?)\"/gm, '==$1');
+
+
+const addBundleImports = (block, blockType) => {
+  const { importStatement } = blockType;
+  let { bundle } = block;
+
+  bundle = !bundle
+    ? ['entry']
+    : bundle.split(',').filter(b => b).map(b => b.trim());
+
+  bundle.forEach((b) => {
+    if (!blockType.bundles[b]) {
+      blockType.bundles[b] = [];
+    }
+
+    blockType.bundles[b].push(importStatement(block.file));
+  });
+}
+
+
+function extractBlocks(path) {
   const blocks = {};
+  const contents = fs.readFileSync(path, 'utf8');
+  const template = /<template>[\s\S]*?<\/template>/gm.test(contents)
+    ? contents
+    : `<template>${contents}</template>`;
+  const original$ = vdom(template);
 
-  Object.entries(blockTypes).forEach(([type, blockType]) => {
-    const { tag } = blockType;
 
-    $(tag).each((i, el) => {
+  Object.entries(blockTypes).forEach(([ type, blockType ]) => {
+    const { tag, ext, pathsRegex } = blockType;
+
+    original$(tag).each((i, el) => {
       const block = {
-        ...{ content: $(el).get()[0].children[0].data },
+        ext,
+        type,
+        file: getHashedPath(path, ext),
+        content: type === 'template'
+          ? minimizeWhitespace(original$)
+          : original$(el).get()[0].children[0].data,
         ...el.attribs
       };
+
+      if (type === 'js') {
+        addBundleImports(block, blockType);
+      }
+
+      if (type !== 'template') {
+        original$(el).remove();
+      }
+
+      block.content = fixPaths(path, block.content, pathsRegex);
+
+      if (type === 'css') {
+        addBundleImports(block, blockType);
+
+        block.content = block.hasOwnProperty('scoped')
+          ? scopeCSS(path, block.content, original$)
+          : cleanCSS(block.content, original$);
+
+        if (blocks.template) {
+          // scoped css effects the template markup so update template content and hash
+          const body = fixInlineAttributeConditions(cleanWhitespace(original$('template').html()));
+          blocks.template.content = body;
+          blocks.template.contentHash = hash(body);
+        }
+      }
+
+      block.contentHash = hash(block.content);
       blocks[type] = block;
-      $(el).remove();
     });
   });
 
@@ -254,11 +344,11 @@ function extractBlocks($) {
 }
 
 
-function writeBlockFiles (blocks) {
-  Object.entries(blocks).forEach(([key, block]) => {
-    fs.writeFileSync(`${_blocksDir}/${block.file}`, block.content);
-  });
-}
+// function writeBlockFiles (blocks) {
+//   Object.entries(blocks).forEach(([key, block]) => {
+//     fs.writeFileSync(`${_blocksDir}/${block.file}`, block.content);
+//   });
+// }
 
 
 function writeEntryFile(type) {
@@ -365,215 +455,113 @@ function replaceSelectors(css, callback) {
 }
 
 
-const defaults = {
-  root: './',
-  watch: false,
-  assets: {
-    origin: '',
-    inline: []
-  },
-  components: {
-    renderer: 'component',
-    shortcut: []
-  }
-};
-
-
-exports.config = (opts) => {
-  const { root, watch, assets, components } = merge(defaults, opts);
-
-  return {
-    name: '@dylan/balm',
-    opts: {
-      root,
-      watch,
-      tags: {
-        asset: {
-          render: asset({
-            inline: assets.inline
-          }),
-          firstArgIsResolvedPath: true,
-          content: false
-        },
-        component: {
-          render: componentRendererMap[components.renderer],
-          firstArgIsResolvedPath: true,
-          content: true
-        }
-      },
-      shortcuts: components.shortcut.reduce(buildShortcut, {})
-    }
-  };
-}
-
-
-
-
-
-
 
 
 class Balm {
 
   constructor(opts = {}) {
-    const { root, watch, assets } = merge(defaults, opts);
-
-    opts.templates = {};
-    opts.loadHandles = opts.hasOwnProperty('loadHandles') ? opts.loadHandles : true;
-
-    this.opts = opts;
-    this.handles = {};
-    this.blocksDir = `${root}/../.beard`;
+    this.opts = merge(defaults, opts);
+    this.blocksDir = `${this.opts.root}/../.beard`;
     this.hashes = {};
 
     _root = this.opts.root;
     _blocksDir = this.blocksDir;
 
-    console.log({ loadHandles: this.opts.loadHandles });
     this.bundle();
-
     this.beard = beard({
-      root,
-      templates: this.opts.templates,
-      tags: opts.tags,
-      shortcuts: opts.shortcuts
+      root: this.opts.root,
+      tags: this.opts.tags,
+      shortcuts: this.opts.shortcuts,
+      templates: this.opts.templates
     });
     this.render = this.beard.render.bind(this.beard);
     this.partial = this.beard.partial.bind(this.beard);
-
-    if (watch) {
-      console.log('WATCH!!!!!!!!!');
-      const socket = new WebSocket.Server({ port: 7778 });
-      const watcher = 'chokidar';
-      const chokidar = require(watcher);
-      const beardFiles = chokidar.watch(`${root}/**/*.beard`);
-      const assetsEntry = chokidar.watch('./public/dist/entry.html');
-      const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js']);
-      const handles = chokidar.watch(['./.beard/*.ssjs.js', './.beard/*.beard']);
+  }
 
 
+  watch() {
+    this.socket = new WebSocket.Server({ port: 7778 });
+    this.changes = [];
 
+    const watcher = 'chokidar';
+    const chokidar = require(watcher);
+    const balmFiles = chokidar.watch(`${this.opts.root}/**/*.beard`);
+    const assetsEntry = chokidar.watch('./public/dist/entry.html');
+    const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js']);
 
-
-      let timer;
-      let changes = [];
-
-      const notifyClient = (path) => {
-        clearTimeout(timer);
-        changes.push(path);
-        timer = setTimeout(() => {
-          socket.clients.forEach((client) => {
-            console.log('going to beard add to client');
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify(changes));
-              changes = [];
-            }
-          });
-        }, 100);
-      }
-
-      // const notifyClient = (path) => {
-      //   socket.clients.forEach((client) => {
-      //     console.log('going to beard add to client');
-      //     if (client.readyState === WebSocket.OPEN) {
-      //       client.send(path);
-      //     }
-      //   });
-      // }
-
-      bundles
-        // .on('add', notifyClient)
-        .on('change', notifyClient);
-
-      handles
-        // .on('add', (path) => {
-        //   console.log('HANDLE ADDED', path);
-        // })
-        .on('change', (path) => {
-          // console.log('HANDLE CHANGED', path);
-          notifyClient(path);
-        });
-
-      beardFiles
-        // .on('add', this.bundleFile.bind(this))
-        .on('change', this.bundleFile.bind(this));
-
-      assetsEntry
-        .on('add', loadAssetsMap.bind(null, assets.origin))
-        .on('change', loadAssetsMap.bind(null, assets.origin));
-    } else {
-      loadAssetsMap(assets.origin);
-    }
+    bundles.on('change', this.notifyClient.bind(this));
+    balmFiles.on('change', this.bundleFile.bind(this));
+    assetsEntry.on('change', loadAssetsMap.bind(null, this.opts.assets.origin));
   }
 
 
   bundle() {
-    if (this.opts.cssExtension) {
-      blockTypes.css.ext = this.opts.cssExtension;
+    if (this.opts.watch) {
+      this.watch();
+    } else {
+      // uncomment this
+      // loadAssetsMap(this.opts.assets.origin);
     }
 
+    blockTypes.css.bundles = { entry: [] };
+    blockTypes.js.bundles = { entry: [] };
     fse.ensureDirSync(this.blocksDir);
-
-    blockTypes.css.bundles = {
-      entry: []
-    };
-
-    blockTypes.js.bundles = {
-      entry: []
-    };
-
-    traversy(this.opts.root, '(.beard$)', this.bundleFile.bind(this));
+    traversy(this.opts.root, fileExtRegexStr, this.bundleFile.bind(this));
     writeEntryFile('css');
     writeEntryFile('js');
   }
 
 
   bundleFile(path) {
-    const regex = new RegExp('(.beard$)', 'g');
     const key = path.replace(regex, '');
-    const contents = fs.readFileSync(path, 'utf8');
-    const template = /<template>[\s\S]*?<\/template>/gm.test(contents)
-      ? contents
-      : `<template>${contents}</template>`;
+    const blocks = extractBlocks(path);
 
-    const original$ = vdom(template);
-    const blocks = parseBlocks(original$, path);
-    const $ = vdom(cleanWhitespace(original$('template').html()));
-    const whitespaceTagsSelectors = 'pre, code, textarea';
-    const originalWhitespaceTags = original$(whitespaceTagsSelectors);
-    const whitespaceTags = $(whitespaceTagsSelectors);
+    Object.entries(blocks).forEach(([ _, block ]) => {
+      const { type, file, content, contentHash } = block;
+      const path = `${this.blocksDir}/${file}`;
+      const previousHash = this.hashes[file];
 
-    originalWhitespaceTags.each((i, el) => {
-      $(whitespaceTags[i]).replaceWith(el);
-    });
+      if (contentHash !== previousHash) {
+        fs.writeFileSync(path, content);
+        this.hashes[file] = contentHash;
 
-    const body = $.html().replace(/=\"=(=?)\"/gm, '==$1');
+        if (this.opts.loadHandles && type === 'handle') {
+          delete require.cache[require.resolve(path)];
+          _handles[key] = require(path);
+        }
 
-    // writeBlockFiles(blocks);
-    Object.entries(blocks).forEach(([key, block]) => {
-      const path = `${this.blocksDir}/${block.file}`;
-      const hashedContent = hash(block.content);
-      console.log('checking for diff');
-      if (this.hashes[path] !== hashedContent) {
-        console.log('!!!!DIFF!!!!!');
-        this.hashes[path] = hashedContent;
-        fs.writeFileSync(path, block.content);
+        if (this.opts.watch && previousHash) {
+          console.log('notify client about', file);
+          this.notifyClient(path);
+        }
+
+        if (type === 'template') {
+          this.opts.templates[key] = content;
+        }
       }
     });
+  }
 
-    if (this.opts.loadHandles && blocks.ssjs) {
-      console.log('REQUIRE HANDLE!!!!!');
-      const handlePath = `${this.blocksDir}/${blocks.ssjs.file}`;
-      delete require.cache[require.resolve(handlePath)];
-      _handles[key] = require(handlePath);
-      this.handles[key] = require(handlePath);
+
+  notifyClient(path) {
+    const ext = path.split('.').pop();
+    if (ext === 'css' && ext === 'js' && !path.includes('.handle.js')) {
+      console.log('supress notify client', path);
+      return;
     }
 
-    if (this.opts.templates[key] !== body) {
-      fs.writeFileSync(`${this.blocksDir}/${getHashedPath(path, 'beard')}`, body);
-    }
+    clearTimeout(this.timer);
+    this.changes.push(path);
 
-    this.opts.templates[key] = body;
+    this.timer = setTimeout(() => {
+      this.socket.clients.forEach((client) => {
+        console.log('going to beard add to client');
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(this.changes));
+          this.changes = [];
+        }
+      });
+    }, 50);
   }
 }
 

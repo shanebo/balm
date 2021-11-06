@@ -10,7 +10,7 @@ exports.vdom = (template) => cheerio.load(template, {
   });
 
 
-exports.cleanWhitespace = str => str.replace(/\s+/g, ' ').trim();
+exports.cleanWhitespace = (str) => str.replace(/\s+/g, ' ').trim();
 
 exports.escape = str => str.replace(/`/gm, '\\\`');
 
