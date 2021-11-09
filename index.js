@@ -14,8 +14,8 @@ const beard = require('beard');
 
 let _root;
 let _blocksDir;
-let _handles = {};
-let assetsMap = {};
+let _handles = {}; // share between both bundling and templating/rendering
+let assetsMap = {}; // share between both bundling and templating/rendering
 let assetOpts = { inline: [] };
 const fileExtRegexStr = '(.beard$)';
 const regex = new RegExp(fileExtRegexStr, 'g');
@@ -140,54 +140,6 @@ const buildShortcut = (shortcuts, { dir, alias = (name) => name }) => {
 
   return shortcuts;
 }
-
-
-
-
-
-const defaults = {
-  root: './',
-  loadHandles: true,
-  templates: {},
-  watch: false,
-  assets: {
-    origin: '',
-    inline: []
-  },
-  components: {
-    renderer: 'component',
-    shortcut: []
-  }
-};
-
-
-exports.config = (opts) => {
-  const { root, watch, assets, components } = merge(defaults, opts);
-
-  return {
-    name: '@dylan/balm',
-    opts: {
-      root,
-      watch,
-      tags: {
-        asset: {
-          render: asset({
-            inline: assets.inline
-          }),
-          firstArgIsResolvedPath: true,
-          content: false
-        },
-        component: {
-          render: componentRendererMap[components.renderer],
-          firstArgIsResolvedPath: true,
-          content: true
-        }
-      },
-      shortcuts: components.shortcut.reduce(buildShortcut, {})
-    }
-  };
-}
-
 
 
 exports.page = (path) => {
@@ -344,13 +296,6 @@ function extractBlocks(path) {
 }
 
 
-// function writeBlockFiles (blocks) {
-//   Object.entries(blocks).forEach(([key, block]) => {
-//     fs.writeFileSync(`${_blocksDir}/${block.file}`, block.content);
-//   });
-// }
-
-
 function writeEntryFile(type) {
   const { bundles, ext } = blockTypes[type];
   Object.keys(bundles).forEach((bundle) => {
@@ -456,11 +401,61 @@ function replaceSelectors(css, callback) {
 
 
 
+const defaults = {
+  root: './',
+  templates: {},
+  loadHandles: true,
+  watch: false,
+  assets: {
+    origin: '',
+    inline: []
+  },
+  components: {
+    renderer: 'component',
+    shortcut: []
+  }
+};
+
 
 class Balm {
 
   constructor(opts = {}) {
-    this.opts = merge(defaults, opts);
+    console.log('\n\n\n');
+    console.log(opts);
+    console.log('\n\n\n');
+
+    const foo = merge(defaults, opts);
+    const { root, watch, assets, components } = foo;
+
+    const yo = {
+        root,
+        watch,
+        tags: {
+          asset: {
+            render: asset({
+              inline: assets.inline
+            }),
+            firstArgIsResolvedPath: true,
+            content: false
+          },
+          component: {
+            render: componentRendererMap[components.renderer],
+            firstArgIsResolvedPath: true,
+            content: true
+          }
+        },
+        shortcuts: components.shortcut.reduce(buildShortcut, {})
+    };
+
+    this.opts = merge(foo, yo);
+
+
+    console.log('\n\n\n');
+    console.log('after merge');
+    console.log(this.opts);
+    console.log('\n\n\n');
+    // this.opts = merge(defaults, opts);
+
     this.blocksDir = `${this.opts.root}/../.beard`;
     this.hashes = {};
 
@@ -567,3 +562,50 @@ class Balm {
 
 
 exports.Balm = Balm;
+
+
+
+
+
+
+
+
+
+
+
+
+// exports.page = () => {
+
+// }
+
+
+// exports.balm = (opts) => {
+//   let _root;
+//   let _blocksDir;
+//   let _handles = {}; // share between both bundling and templating/rendering
+//   let assetsMap = {}; // share between both bundling and templating/rendering
+//   let assetOpts = { inline: [] };
+//   const fileExtRegexStr = '(.beard$)';
+//   const regex = new RegExp(fileExtRegexStr, 'g');
+
+//   all the functions above
+
+//   return () => {
+//     bundleFile () {
+
+//     }
+//   };
+// }
+
+
+// const instance = balm({
+//   ...
+// })
+
+
+
+// balm
+// - configuration
+// - bundling
+// - rendering
+// - page
