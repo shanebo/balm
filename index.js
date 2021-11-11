@@ -474,19 +474,33 @@ exports.balm = (opts = {}) => {
     }
   }
 
+  const _hasBundled = {};
+
 
   function startWatching() {
     _socket = new WebSocket.Server({ port: 7778 });
 
     const watcher = 'chokidar';
     const chokidar = require(watcher);
+    const distWatchOptions = {
+      awaitWriteFinish: {
+        stabilityThreshold: 100,
+        pollInterval: 25
+      }
+    };
+    const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js'], distWatchOptions);
+    const assetsEntry = chokidar.watch('./public/dist/entry.html', distWatchOptions);
     const balmFiles = chokidar.watch(`${opts.root}/**/*.beard`);
-    const bundles = chokidar.watch(['./public/dist/*.css', './public/dist/*.js']);
-    const assetsEntry = chokidar.watch('./public/dist/entry.html');
 
-    balmFiles.on('change', bundleFile);
-    bundles.on('change', notifyClient);
+    bundles.on('change', (path) => {
+      if (_hasBundled[path]) {
+        notifyClient(path);
+      } else {
+        _hasBundled[path] = true;
+      }
+    });
     assetsEntry.on('change', loadAssetsMap);
+    balmFiles.on('change', bundleFile);
   }
 
 
@@ -524,14 +538,8 @@ exports.balm = (opts = {}) => {
     clearTimeout(_timer);
 
     path = path.split('/').pop();
-
-    if (_changes.length > 3) {
-      // terrible way to supress firstPass
-      _changes = [];
-    } else {
-      _changes.push(path);
-      _changes = [...new Set(_changes)];
-    }
+    _changes.push(path);
+    _changes = [...new Set(_changes)];
 
     _timer = setTimeout(() => {
       _socket.clients.forEach((client) => {
