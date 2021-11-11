@@ -1,4 +1,4 @@
-const { balm } = require('../index');
+const { balm } = require('../lib/index');
 const engine = balm({ root: __dirname });
 const { expect } = require('chai');
 

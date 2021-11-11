@@ -1,4 +1,4 @@
-const { balm } = require('../index');
+const { balm } = require('../lib/index');
 const fs = require('fs');
 const chai = require('chai');
 const { expect } = chai;

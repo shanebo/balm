@@ -2,6 +2,14 @@
 
 Balm for Dylan's Beard.
 
+Balm is a component file format that allows the inlining of blocks (template, style, script, and script handle). These blocks are extracted, import paths are modified, styles are optionally scoped, and written to the hidden balm folder for bundling use.
+
+## Features
+- Scoped styles
+- Set bundle(s) the style and script blocks belong to
+- Memory cached compiled templates
+- HMR for css, js, template, and handles
+
 ## Install
 
 `npm install @dylan/balm`

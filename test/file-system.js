@@ -1,4 +1,4 @@
-const { balm } = require('../index');
+const { balm } = require('../lib/index');
 const { expect } = require('chai');
 
 describe('File System', function() {
