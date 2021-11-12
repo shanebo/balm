@@ -1,0 +1,12 @@
+<body>
+  <textarea>
+    Hello world.
+    This works.
+  </textarea>
+</body>
+
+<style scoped>
+textarea {
+  color: green;
+}
+</style>

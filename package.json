@@ -13,6 +13,9 @@
   "bin": {
     "balm": "./lib/cli.js"
   },
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {
     "beard": "~0.9.1",
     "callsites": "3.0.0",
@@ -25,5 +28,10 @@
     "traversy": "0.0.2",
     "ws": "~8.2.3",
     "xregexp": "~5.1.0"
+  },
+  "devDependencies": {
+    "mocha": "4.1.0",
+    "chai": "4.1.2",
+    "chai-string": "1.5.0"
   }
 }
