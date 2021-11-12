@@ -10,6 +10,9 @@
   "repository": "shanebo/balm",
   "author": "Shane Thacker <shane@steadymade.com>",
   "main": "./lib/index",
+  "bin": {
+    "balm": "./lib/cli.js"
+  },
   "dependencies": {
     "beard": "~0.9.1",
     "callsites": "3.0.0",
