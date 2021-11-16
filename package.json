@@ -1,6 +1,6 @@
 {
   "name": "@dylan/balm",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Balm for Dylan's Beard.",
   "license": "MIT",
   "keywords": [
@@ -9,12 +9,28 @@
   ],
   "repository": "shanebo/balm",
   "author": "Shane Thacker <shane@steadymade.com>",
-  "main": "./index",
+  "main": "./lib/index",
+  "bin": {
+    "balm": "./lib/cli.js"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
   "dependencies": {
+    "beard": "~0.9.1",
     "callsites": "3.0.0",
-    "chokidar": "^3.5.2",
+    "cheerio": "github:cheeriojs/cheerio#3368605edb3c5babecc8576602a9d54ccfdaef1e",
     "klona": "~2.0.5",
-    "merge-anything": "~4.0.1",
-    "traversy": "0.0.2"
+    "merge-anything": "~4.0.2",
+    "normalize-selector": "0.2.0",
+    "traversy": "0.0.2",
+    "ws": "~8.2.3",
+    "xregexp": "~5.1.0"
+  },
+  "devDependencies": {
+    "chai": "4.1.2",
+    "chai-string": "1.5.0",
+    "chokidar": "^3.5.2",
+    "mocha": "4.1.0"
   }
 }
