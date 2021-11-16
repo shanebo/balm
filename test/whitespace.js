@@ -18,6 +18,6 @@ describe('Templating', function() {
 
   it('does not remove textarea whitespace while scoped', function() {
     const rendered = engine.render('templates/whitespace-scoped');
-    expect(rendered).to.include('<body> <textarea class="b-b2350a">\n    Hello world.\n    This works.\n  </textarea> </body>');
+    expect(rendered).to.include('<body> <textarea class="b-c9c00b">\n    Hello world.\n    This works.\n  </textarea> </body>');
   });
 });
