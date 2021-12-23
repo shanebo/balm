@@ -23,6 +23,7 @@
     "klona": "~2.0.5",
     "merge-anything": "~4.0.2",
     "normalize-selector": "0.2.0",
+    "sockette": "~2.0.6",
     "traversy": "0.0.2",
     "ws": "~8.2.3",
     "xregexp": "~5.1.0"
