@@ -1,0 +1,20 @@
+diff --git a/node_modules/esbuild-plugin-babel/src/index.js b/node_modules/esbuild-plugin-babel/src/index.js
+index b3cff90..e6c9a1b 100644
+--- a/node_modules/esbuild-plugin-babel/src/index.js
++++ b/node_modules/esbuild-plugin-babel/src/index.js
+@@ -1,6 +1,6 @@
+-import babel from '@babel/core';
+-import fs from 'fs';
+-import path from 'path';
++const babel = require('@babel/core');
++const fs = require('fs');
++const path = require('path');
+
+ const pluginBabel = (options = {}) => ({
+ 	name: 'babel',
+@@ -41,4 +41,4 @@ const pluginBabel = (options = {}) => ({
+ 	}
+ });
+
+-export default pluginBabel;
++module.exports = pluginBabel;
