@@ -1,6 +1,6 @@
 # Balm
 
-Balm is a component file format that allows the inlining of blocks (template, style, script, and a server side javascript handle). These blocks are extracted, bundled, import paths modified, styles and markup optionally scoped, and written to the hidden balm folder for parcel's bundling use. This is balm for Dylan's beard.
+Balm is a component file format that allows the inlining of blocks (template, style, script, and a server side javascript handle). These blocks are extracted, bundled, import paths modified, styles and markup optionally scoped, and written to the hidden balm folder for use in esbuild bundling. This is balm for Dylan's beard.
 
 ## Features
 
@@ -9,6 +9,7 @@ Balm is a component file format that allows the inlining of blocks (template, st
 - Dynamically built bundles in balm blocks
 - Memory cached compiled templates
 - HMR for css, js, template, and server side javascript handles
+- Bundling via esbuild
 
 ## Install
 
@@ -40,6 +41,13 @@ const engine = {
           dir: root + '/subdomains/hub/components',
           alias: (name) => `hub.${name}`
         }
+      ]
+    },
+    esbuild: {
+      entryPoints: [
+        'app/assets/styles/app.css',
+        'app/assets/scripts/app.js',
+        'app/assets/statics.css'
       ]
     }
   }
