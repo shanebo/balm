@@ -12,7 +12,10 @@ const contents = (path, ext) => {
   return fs.readFileSync(resolve(`.balm/${file}`), 'utf8').trim().replace(/\s+/g, ' ');
 }
 
-const engine = balm({ root: __dirname });
+const engine = balm({
+  root: __dirname,
+  watch: false
+});
 
 chai.use(function (chai) {
   const Assertion = chai.Assertion;

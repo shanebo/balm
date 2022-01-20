@@ -1,6 +1,9 @@
 const { balm } = require('../lib/index');
 const { expect } = require('chai');
-const engine = balm({ root: __dirname });
+const engine = balm({
+  root: __dirname,
+  watch: false
+});
 
 describe('Templating', function() {
   it('removes repetitive whitespace', function() {
