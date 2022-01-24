@@ -1,0 +1,30 @@
+name: Balm CI
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      CI: true
+      NODE_ENV: development
+
+    steps:
+
+    ##############################
+    #
+    # INSTALL AND RUN THE UI TESTS
+    #
+    - uses: actions/checkout@v2
+
+    - name: Install Node.js 14.17.3
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14.17.3
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
