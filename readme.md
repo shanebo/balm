@@ -25,11 +25,9 @@ const engine = {
   name: '@dylan/balm',
   opts: {
     root,
+    origin: 'https://statics.website.com',
     watch: process.env.NODE_ENV === 'development',
     bundle: process.env.NODE_ENV === 'development',
-    assets: {
-      origin: 'https://statics.website.com'
-    },
     browserslist: [
       'last 2 versions',
       '> 2%'
