@@ -28,8 +28,7 @@ const engine = {
     watch: process.env.NODE_ENV === 'development',
     bundle: process.env.NODE_ENV === 'development',
     assets: {
-      origin: 'https://statics.website.com',
-      inline: [resolve('app/subdomains/send/send.css')]
+      origin: 'https://statics.website.com'
     },
     browserslist: [
       'last 2 versions',
