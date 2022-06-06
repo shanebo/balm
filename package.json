@@ -1,6 +1,6 @@
 {
   "name": "@dylan/balm",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Balm for Dylan's Beard.",
   "license": "MIT",
   "keywords": [
@@ -21,7 +21,7 @@
     "beard": "~0.9.1",
     "browserslist-to-esbuild": "~1.1.1",
     "callsites": "3.0.0",
-    "cheerio": "github:cheeriojs/cheerio#3368605edb3c5babecc8576602a9d54ccfdaef1e",
+    "cheerio": "git+https://git@github.com/cheeriojs/cheerio.git#3368605edb3c5babecc8576602a9d54ccfdaef1e",
     "esbuild": "~0.14.8",
     "klona": "~2.0.5",
     "merge-anything": "~4.0.2",
