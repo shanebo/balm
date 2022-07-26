@@ -1,6 +1,6 @@
 {
   "name": "@dylan/balm",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "description": "Balm for Dylan's Beard.",
   "license": "MIT",
   "keywords": [
@@ -18,11 +18,11 @@
   },
   "dependencies": {
     "autoprefixer": "^10.4.7",
-    "beard": "^0.9.2",
+    "beard": "~0.9.2",
     "browserslist-to-esbuild": "~1.1.1",
     "callsites": "3.0.0",
-    "cheerio": "^1.0.0-rc.12",
-    "esbuild": "~0.14.8",
+    "cheerio": "~1.0.0-rc.12",
+    "esbuild": "~0.14.50",
     "klona": "~2.0.5",
     "merge-anything": "~4.0.2",
     "normalize-selector": "0.2.0",
@@ -31,7 +31,7 @@
     "postcss-nested": "^5.0.6",
     "postcss-preset-env": "^7.7.2",
     "sockette": "~2.0.6",
-    "traversy": "0.0.2",
+    "traversy": "~0.0.2",
     "ws": "~8.2.3",
     "xregexp": "~5.1.0"
   },
