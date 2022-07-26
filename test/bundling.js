@@ -63,14 +63,14 @@ describe('Bundling', function() {
   describe('when script block has inline attribute', function() {
     it('leaves the script tag in the template', function() {
       expect(engine.render('templates/inline-js')).to.
-        equalIgnoreSpaces(`<div>content</div> <script inline=""> alert('inline js'); </script>`);
+        equalIgnoreSpaces(`<div>content</div> <script inline> alert('inline js'); </script>`);
     });
   });
 
   describe('when style block has inline attribute', function() {
     it('leaves the style tag in the template', function() {
       expect(engine.render('templates/inline-css')).to.
-        equalIgnoreSpaces(`<div>content</div> <style inline=""> h1 { color: red; } </style>`);
+        equalIgnoreSpaces(`<div>content</div> <style inline> h1 { color: red; } </style>`);
     });
   });
 
