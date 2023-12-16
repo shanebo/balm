@@ -32,7 +32,7 @@
     "postcss-preset-env": "^9.3.0",
     "sockette": "^2.0.6",
     "traversy": "~0.0.2",
-    "ws": "~8.2.3",
+    "ws": "^8.15.1",
     "xregexp": "~5.1.0"
   },
   "devDependencies": {
