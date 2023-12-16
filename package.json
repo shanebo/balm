@@ -24,7 +24,7 @@
     "cheerio": "~1.0.0-rc.12",
     "esbuild": "0.16.17",
     "klona": "^2.0.6",
-    "merge-anything": "~4.0.2",
+    "merge-anything": "^5.1.7",
     "normalize-selector": "0.2.0",
     "postcss": "^8.4.14",
     "postcss-each": "^1.1.0",
