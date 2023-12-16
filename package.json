@@ -33,7 +33,7 @@
     "sockette": "^2.0.6",
     "traversy": "~0.0.2",
     "ws": "^8.15.1",
-    "xregexp": "~5.1.0"
+    "xregexp": "^5.1.1"
   },
   "devDependencies": {
     "chai": "^4.3.6",
