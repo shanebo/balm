@@ -28,7 +28,7 @@
     "normalize-selector": "^0.2.0",
     "postcss": "^8.4.32",
     "postcss-each": "^1.1.0",
-    "postcss-nested": "^5.0.6",
+    "postcss-nested": "^6.0.1",
     "postcss-preset-env": "^7.7.2",
     "sockette": "~2.0.6",
     "traversy": "~0.0.2",
