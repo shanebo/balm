@@ -3,8 +3,6 @@ const chai = require('chai');
 const { expect } = chai;
 const { balm } = require('../lib/index');
 const { resolve } = require('path');
-chai.use(require('chai-string'));
-
 const read = (file) => fs.readFileSync(resolve(`.balm/${file}`), 'utf8').trim();
 const contents = (path, ext) => {
   const files = fs.readdirSync(resolve('.balm'));
@@ -20,6 +18,11 @@ chai.use(function (chai) {
   Assertion.addMethod('matchScoped', function (expected) {
     const hashRegex = new RegExp(expected.replace(/\$b/gm, '(b\-[0-9a-fA-F]{6})'));
     new Assertion(this._obj).to.match(hashRegex);
+  });
+
+  Assertion.addMethod('equalIgnoreSpaces', function (expected) {
+    const normalize = (s) => s.replace(/\s+/g, ' ').trim();
+    new Assertion(normalize(this._obj)).to.equal(normalize(expected));
   });
 });
 
