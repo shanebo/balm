@@ -7,11 +7,14 @@
     "dylan",
     "beard"
   ],
-  "repository": "shanebo/balm",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shanebo/balm.git"
+  },
   "author": "Shane Thacker <shane@steadymade.com>",
   "main": "./lib/index",
   "bin": {
-    "balm": "./lib/cli.js"
+    "balm": "lib/cli.js"
   },
   "scripts": {
     "test": "mocha"
