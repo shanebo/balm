@@ -3,8 +3,6 @@ const chai = require('chai');
 const { expect } = chai;
 const { balm } = require('../lib/index');
 const { resolve } = require('path');
-chai.use(require('chai-string'));
-
 const read = (file) => fs.readFileSync(resolve(`.balm/${file}`), 'utf8').trim();
 const contents = (path, ext) => {
   const files = fs.readdirSync(resolve('.balm'));
