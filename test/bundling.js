@@ -19,6 +19,11 @@ chai.use(function (chai) {
     const hashRegex = new RegExp(expected.replace(/\$b/gm, '(b\-[0-9a-fA-F]{6})'));
     new Assertion(this._obj).to.match(hashRegex);
   });
+
+  Assertion.addMethod('equalIgnoreSpaces', function (expected) {
+    const normalize = (s) => s.replace(/\s+/g, ' ').trim();
+    new Assertion(normalize(this._obj)).to.equal(normalize(expected));
+  });
 });
 
 describe('Bundling', function() {
